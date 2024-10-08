@@ -9,5 +9,5 @@
     "HyperBackup": true,
     "HyperBackupVault": true,
     "ExporterPort": "9771",
-    "DSM_Version": "7"
+    "DSM_Version": 7
 }
