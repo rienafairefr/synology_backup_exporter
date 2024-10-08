@@ -12,26 +12,22 @@ from synology_api import core_active_backup as active_backup
 from synology_api import core_backup as hyper_backup
 
 
-def active_backup_register_metrics():
-    global gauge_active_backup_lastbackup_timestamp
+class active_backup_register_metrics:
     gauge_active_backup_lastbackup_timestamp = Gauge(
         "synology_active_backup_lastbackup_timestamp",
         "Timestamp of last backup",
         ["vmname", "hostname", "vmuuid", "vmos"],
     )
-    global gauge_active_backup_lastbackup_duration
     gauge_active_backup_lastbackup_duration = Gauge(
         "synology_active_backup_lastbackup_duration",
         "Duration of last backup in Seconds",
         ["vmname", "hostname", "vmuuid", "vmos"],
     )
-    global gauge_active_backup_lastbackup_transfered_bytes
     gauge_active_backup_lastbackup_transfered_bytes = Gauge(
         "synology_active_backup_lastbackup_transfered_bytes",
         "Transfered data of last backup in Bytes",
         ["vmname", "hostname", "vmuuid", "vmos"],
     )
-    global gauge_active_backup_lastbackup_result
     gauge_active_backup_lastbackup_result = Gauge(
         "synology_active_backup_lastbackup_result",
         "Result of last backup - 2 = Good, 4 = Bad",
@@ -40,8 +36,7 @@ def active_backup_register_metrics():
 
 
 def active_backup_login():
-    global active_backup_session
-    active_backup_session = active_backup.ActiveBackupBusiness(
+    return active_backup.ActiveBackupBusiness(
         config["DSMAddress"],
         config["DSMPort"],
         config["Username"],
@@ -52,7 +47,7 @@ def active_backup_login():
     )
 
 
-def active_backup_get_info():
+def active_backup_get_info(active_backup_session):
     abb_hypervisor = active_backup_session.list_vm_hypervisor()
     abb_vms = active_backup_session.list_device_transfer_size()
 
@@ -78,16 +73,16 @@ def active_backup_get_info():
                 vm_backup_duration_seconds = vm_backup_end_timestamp - vm_backup_start_timestamp
                 vm_backup_status = vm["transfer_list"][0]["status"]
                 vm_backup_transfered_bytes = vm["transfer_list"][0]["transfered_bytes"]
-                gauge_active_backup_lastbackup_timestamp.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
+                active_backup_register_metrics.gauge_active_backup_lastbackup_timestamp.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
                     vm_backup_end_timestamp
                 )
-                gauge_active_backup_lastbackup_duration.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
+                active_backup_register_metrics.gauge_active_backup_lastbackup_duration.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
                     vm_backup_duration_seconds
                 )
-                gauge_active_backup_lastbackup_transfered_bytes.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
+                active_backup_register_metrics.gauge_active_backup_lastbackup_transfered_bytes.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
                     vm_backup_transfered_bytes
                 )
-                gauge_active_backup_lastbackup_result.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
+                active_backup_register_metrics.gauge_active_backup_lastbackup_result.labels(vm_hostname, vm_hypervisor, vm_uuid, vm_os).set(
                     vm_backup_status
                 )
         except IndexError:
@@ -119,20 +114,17 @@ def convert_to_int(input):
         return None
 
 
-def hyper_backup_register_metrics():
-    global gauge_hyper_backup_lastbackup_successful_timestamp
+class hyper_backup_register_metrics:
     gauge_hyper_backup_lastbackup_successful_timestamp = Gauge(
         "synology_hyper_backup_lastbackup_successful_timestamp",
         "Timestamp of last successful backup",
         ["task_id", "task_name", "target_type"],
     )
-    global gauge_hyper_backup_lastbackup_timestamp
     gauge_hyper_backup_lastbackup_timestamp = Gauge(
         "synology_hyper_backup_lastbackup_timestamp",
         "Timestamp of last backup",
         ["task_id", "task_name", "target_type"],
     )
-    global gauge_hyper_backup_lastbackup_duration
     gauge_hyper_backup_lastbackup_duration = Gauge(
         "synology_hyper_backup_lastbackup_duration",
         "Duration of last backup in Seconds",
@@ -141,8 +133,7 @@ def hyper_backup_register_metrics():
 
 
 def hyper_backup_login():
-    global hyper_backup_session
-    hyper_backup_session = hyper_backup.Backup(
+    return hyper_backup.Backup(
         config["DSMAddress"],
         config["DSMPort"],
         config["Username"],
@@ -153,7 +144,7 @@ def hyper_backup_login():
     )
 
 
-def hyper_backup_get_info():
+def hyper_backup_get_info(hyper_backup_session):
     hyper_backup_data = hyper_backup_session.backup_task_list()
 
     hyper_backup_tasklist = {}
@@ -210,17 +201,17 @@ def hyper_backup_get_info():
         hyper_backup_duration_seconds = hyper_backup_end_timestamp - hyper_backup_start_timestamp
 
         try:  # trying, if no backup is existing, this will fail.
-            gauge_hyper_backup_lastbackup_successful_timestamp.labels(
+            hyper_backup_register_metrics.gauge_hyper_backup_lastbackup_successful_timestamp.labels(
                 hyper_backup_tasklist[result],
                 hyper_backup_taskname[result],
                 hyper_backup_tasktype[result],
             ).set(hyper_backup_last_success_timestamp)
-            gauge_hyper_backup_lastbackup_timestamp.labels(
+            hyper_backup_register_metrics.gauge_hyper_backup_lastbackup_timestamp.labels(
                 hyper_backup_tasklist[result],
                 hyper_backup_taskname[result],
                 hyper_backup_tasktype[result],
             ).set(hyper_backup_end_timestamp)
-            gauge_hyper_backup_lastbackup_duration.labels(
+            hyper_backup_register_metrics.gauge_hyper_backup_lastbackup_duration.labels(
                 hyper_backup_tasklist[result],
                 hyper_backup_taskname[result],
                 hyper_backup_tasktype[result],
@@ -230,20 +221,17 @@ def hyper_backup_get_info():
             print("ERROR - Failed to load Backups.")
 
 
-def hyper_backup_vault_register_metrics():
-    global gauge_hyper_backup_vault_last_backup_duration_seconds
+class hyper_backup_vault_register_metrics:
     gauge_hyper_backup_vault_last_backup_duration_seconds = Gauge(
         "synology_hyper_backup_vault_last_backup_duration_seconds",
         "Duration of last backup",
         ["target_name", "target_id", "target_status"],
     )
-    global gauge_hyper_backup_vault_last_backup_start_timestamp
     gauge_hyper_backup_vault_last_backup_start_timestamp = Gauge(
         "synology_hyper_backup_vault_last_backup_start_timestamp",
         "Timestamp of last backup start",
         ["target_name", "target_id", "target_status"],
     )
-    global gauge_hyper_backup_vault_target_used_size_bytes
     gauge_hyper_backup_vault_target_used_size_bytes = Gauge(
         "synology_hyper_backup_vault_target_used_size_bytes",
         "Size of last backup",
@@ -252,8 +240,7 @@ def hyper_backup_vault_register_metrics():
 
 
 def hyper_backup_vault_login():
-    global hyper_backup_vault_session
-    hyper_backup_vault_session = hyper_backup.Backup(
+    return hyper_backup.Backup(
         config["DSMAddress"],
         config["DSMPort"],
         config["Username"],
@@ -264,7 +251,7 @@ def hyper_backup_vault_login():
     )
 
 
-def hyper_backup_vault_get_info():
+def hyper_backup_vault_get_info(hyper_backup_vault_session):
     hyper_backup_vault_data = hyper_backup_vault_session.vault_target_list()
 
     for target in hyper_backup_vault_data["data"]["target_list"]:
@@ -276,17 +263,17 @@ def hyper_backup_vault_get_info():
         hyper_backup_vault_target_used_size_kibibytes = target["used_size"]
         hyper_backup_vault_target_used_size_bytes = hyper_backup_vault_target_used_size_kibibytes * 1024
 
-        gauge_hyper_backup_vault_last_backup_duration_seconds.labels(
+        hyper_backup_vault_register_metrics.gauge_hyper_backup_vault_last_backup_duration_seconds.labels(
             hyper_backup_vault_target_name,
             hyper_backup_vault_target_id,
             hyper_backup_vault_target_status,
         ).set(hyper_backup_vault_target_last_backup_duration)
-        gauge_hyper_backup_vault_last_backup_start_timestamp.labels(
+        hyper_backup_vault_register_metrics.gauge_hyper_backup_vault_last_backup_start_timestamp.labels(
             hyper_backup_vault_target_name,
             hyper_backup_vault_target_id,
             hyper_backup_vault_target_status,
         ).set(hyper_backup_vault_target_last_backup_start_time)
-        gauge_hyper_backup_vault_target_used_size_bytes.labels(
+        hyper_backup_vault_register_metrics.gauge_hyper_backup_vault_target_used_size_bytes.labels(
             hyper_backup_vault_target_name,
             hyper_backup_vault_target_id,
             hyper_backup_vault_target_status,
@@ -358,19 +345,16 @@ if __name__ == "__main__":
     print("2024 - raphii / Raphael Pertl")
 
     if config["ActiveBackup"]:
-        active_backup_register_metrics()
-        active_backup_login()
-        active_backup_get_info()
+        active_backup_session = active_backup_login()
+        active_backup_get_info(active_backup_session)
 
     if config["HyperBackup"]:
-        hyper_backup_register_metrics()
-        hyper_backup_login()
-        hyper_backup_get_info()
+        hyper_backup_session = hyper_backup_login()
+        hyper_backup_get_info(hyper_backup_session)
 
     if config["HyperBackupVault"]:
-        hyper_backup_vault_register_metrics()
-        hyper_backup_vault_login()
-        hyper_backup_vault_get_info()
+        hyper_backup_vault_session = hyper_backup_vault_login()
+        hyper_backup_vault_get_info(hyper_backup_vault_session)
 
     # Start up the server to expose the metrics.
     start_http_server(int(config["ExporterPort"]))
@@ -380,8 +364,8 @@ if __name__ == "__main__":
         process_request(random.random())
         time.sleep(60)
         if config["ActiveBackup"]:
-            active_backup_get_info()
+            active_backup_get_info(active_backup_session)
         if config["HyperBackup"]:
-            hyper_backup_get_info()
+            hyper_backup_get_info(hyper_backup_session)
         if config["HyperBackupVault"]:
-            hyper_backup_vault_get_info()
+            hyper_backup_vault_get_info(hyper_backup_vault_session)
