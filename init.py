@@ -321,8 +321,9 @@ def get_config(config_file_name="config.json"):
         )
         exit(1)
 
-    if "Address" not in config:
-        config["Address"] = "0.0.0.0"
+    if "ExporterAddress" not in config:
+        config["ExporterAddress"] = "0.0.0.0"
+
     creds = (
         config["DSMAddress"],
         config["DSMPort"],
@@ -341,7 +342,7 @@ if __name__ == "__main__":
     print("2024 - raphii / Raphael Pertl")
     # Start up the server to expose the metrics.
     REGISTRY.register(BackupsCollector(config, creds))
-    start_http_server(int(config["ExporterPort"]), config["Address"])
+    start_http_server(int(config["ExporterPort"]), config["ExporterAddress"])
     print("INFO - Web Server running on Port " + str(config["ExporterPort"]))
     while True:
         # wait, server is in a thread started in start_http_server
