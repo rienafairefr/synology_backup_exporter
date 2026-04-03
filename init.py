@@ -63,22 +63,25 @@ def active_backup_get_info(active_backup_session):
                 active_backup_lastbackup_timestamp.add_metric(
                     [vm_hostname, vm_hypervisor, vm_uuid, vm_os], vm_backup_end_timestamp
                 )
-                yield active_backup_lastbackup_timestamp
+
                 active_backup_lastbackup_duration.add_metric(
                     [vm_hostname, vm_hypervisor, vm_uuid, vm_os], vm_backup_duration_seconds
                 )
-                yield active_backup_lastbackup_duration
+
                 active_backup_lastbackup_transfered_bytes.add_metric(
                     [vm_hostname, vm_hypervisor, vm_uuid, vm_os], vm_backup_transfered_bytes
                 )
-                yield active_backup_lastbackup_transfered_bytes
+
                 active_backup_lastbackup_result.add_metric(
                     [vm_hostname, vm_hypervisor, vm_uuid, vm_os], vm_backup_status
                 )
-                yield active_backup_lastbackup_result
         except IndexError:
             print("ERROR - Failed to load Backups.")
 
+    yield active_backup_lastbackup_timestamp
+    yield active_backup_lastbackup_duration
+    yield active_backup_lastbackup_transfered_bytes
+    yield active_backup_lastbackup_result
 
 def convert_to_bool(input_):
     # distutils.util.strtobool is deprecated, and according to PEP 632
