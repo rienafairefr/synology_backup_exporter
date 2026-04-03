@@ -83,6 +83,7 @@ def active_backup_get_info(active_backup_session):
     yield active_backup_lastbackup_transfered_bytes
     yield active_backup_lastbackup_result
 
+
 def convert_to_bool(input_):
     # distutils.util.strtobool is deprecated, and according to PEP 632
     # the suggestion is "you will need to reimplement the functionality yourself"
@@ -176,7 +177,6 @@ def hyper_backup_get_info(hyper_backup_session):
                 ],
                 hyper_backup_last_success_timestamp,
             )
-            yield hyper_backup_lastbackup_successful_timestamp
             hyper_backup_lastbackup_timestamp.add_metric(
                 [
                     hyper_backup_tasklist[result],
@@ -185,7 +185,6 @@ def hyper_backup_get_info(hyper_backup_session):
                 ],
                 hyper_backup_end_timestamp,
             )
-            yield hyper_backup_lastbackup_timestamp
             hyper_backup_lastbackup_duration.add_metric(
                 [
                     hyper_backup_tasklist[result],
@@ -194,9 +193,13 @@ def hyper_backup_get_info(hyper_backup_session):
                 ],
                 hyper_backup_duration_seconds,
             )
-            yield hyper_backup_lastbackup_duration
+
         except IndexError:
             print("ERROR - Failed to load Backups.")
+
+    yield hyper_backup_lastbackup_successful_timestamp
+    yield hyper_backup_lastbackup_timestamp
+    yield hyper_backup_lastbackup_duration
 
 
 def hyper_backup_vault_get_info(hyper_backup_vault_session):
@@ -233,7 +236,6 @@ def hyper_backup_vault_get_info(hyper_backup_vault_session):
             ],
             hyper_backup_vault_target_last_backup_duration,
         )
-        yield hyper_backup_vault_last_backup_duration_seconds
         hyper_backup_vault_last_backup_start_timestamp.add_metric(
             [
                 hyper_backup_vault_target_name,
@@ -242,7 +244,6 @@ def hyper_backup_vault_get_info(hyper_backup_vault_session):
             ],
             hyper_backup_vault_target_last_backup_start_time,
         )
-        yield hyper_backup_vault_last_backup_start_timestamp
         hyper_backup_vault_target_used_size_bytes.add_metric(
             [
                 hyper_backup_vault_target_name,
@@ -251,7 +252,10 @@ def hyper_backup_vault_get_info(hyper_backup_vault_session):
             ],
             hyper_backup_vault_target_used_size_in_bytes,
         )
-        yield hyper_backup_vault_target_used_size_bytes
+
+    yield hyper_backup_vault_last_backup_duration_seconds
+    yield hyper_backup_vault_last_backup_start_timestamp
+    yield hyper_backup_vault_target_used_size_bytes
 
 
 class BackupsCollector(Collector):
@@ -350,4 +354,3 @@ if __name__ == "__main__":
     while True:
         # wait, server is in a thread started in start_http_server
         time.sleep(60)
-
